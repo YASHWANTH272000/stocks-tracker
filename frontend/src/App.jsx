@@ -3,7 +3,7 @@ import PortfolioTable from "./components/PortfolioTable";
 
 function App() {
   return (
-    <div className="flex items-center justify-center">
+    <div>
       <h1>Dashboard : Yashwanth K</h1>
       <PortfolioTable />
     </div>
