@@ -51,6 +51,7 @@ const getPriceInfo = async (name, code) => {
             peRatio: result.peRatio,
         };
     } catch (e) {
+        console.log("error while fetching data", e)
         return { price: 0, symbol: 'error' };
     }
 };
