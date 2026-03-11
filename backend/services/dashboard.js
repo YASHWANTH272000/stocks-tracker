@@ -56,6 +56,31 @@ const getPriceInfo = async (name, code) => {
     }
 };
 
+const getUpdatedStockDetails = async (row) => {
+    const { price, symbol, latestEarnings, peRatio } = await getPriceInfo(row["Particulars"], row["NSE/BSE"]);
+    
+    const buyPrice = row["Purchase Price"] || 0;
+    const count = row["Qty"] || 0;
+    const invested = buyPrice * count;
+    const currentVal = price * count;
+    const gainLoss = Number((currentVal - invested).toFixed(2))
+
+    return {
+        particular: row["Particulars"],
+        purchasePrice: buyPrice,
+        qty: count,
+        investment: invested,
+        portfolio: Number(row["Portfolio (%)"].toFixed(2)),
+        symbol,
+        cmp: price,
+        presentValue: Number(currentVal.toFixed(2)),
+        gainLoss,
+        peRatio,
+        latestEarnings,
+        sector: row["currentSector"],
+    };
+}
+
 const getPortfolio = async (req, res) => {
     try {
         const book = XLSX.readFile(filePath);
@@ -73,30 +98,15 @@ const getPortfolio = async (req, res) => {
             }
         }
         const activeRows = rawStocks.filter(r => r.No);
-        const stocks = await Promise.all(activeRows.map(async (row) => {
-            const { price, symbol, latestEarnings, peRatio } = await getPriceInfo(row["Particulars"], row["NSE/BSE"]);
-            
-            const buyPrice = row["Purchase Price"] || 0;
-            const count = row["Qty"] || 0;
-            const invested = buyPrice * count;
-            const currentVal = price * count;
-            const gainLoss = Number((currentVal - invested).toFixed(2))
 
-            return {
-                particular: row["Particulars"],
-                purchasePrice: buyPrice,
-                qty: count,
-                investment: invested,
-                portfolio: Number(row["Portfolio (%)"].toFixed(2)),
-                symbol,
-                cmp: price,
-                presentValue: Number(currentVal.toFixed(2)),
-                gainLoss,
-                peRatio,
-                latestEarnings,
-                sector: row["currentSector"],
-            };
-        }));
+        const stocks = [];
+
+        for (const row of activeRows) {
+        const stock = await getUpdatedStockDetails(row);
+        stocks.push(stock);
+
+        await new Promise(r => setTimeout(r, 500)); // delay
+        }
 
         const sectors = stocks.reduce((acc, curr) => {
             const s = curr.sector;
